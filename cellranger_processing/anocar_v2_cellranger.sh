@@ -3,7 +3,6 @@
 #SBATCH --account=aealmada_561
 #SBATCH --partition=main
 #SBATCH --job-name=cell_ranger_v2
-#SBATCH --mail-user=difeizhu@usc.edu
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
