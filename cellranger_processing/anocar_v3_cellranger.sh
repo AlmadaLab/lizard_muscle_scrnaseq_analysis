@@ -3,8 +3,6 @@
 #SBATCH --account=aealmada_561
 #SBATCH --partition=main
 #SBATCH --job-name=cell_ranger
-#SBATCH --mail-user=difeizhu@usc.edu
-#SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
