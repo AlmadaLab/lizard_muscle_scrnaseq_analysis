@@ -1,0 +1,225 @@
+---
+title: "20260723_lizard_integration_QC"
+author: "Judy Zhu"
+output: github_document
+date: "2026-07-23"
+---
+
+# Introduction
+
+QC the integrated object (AnoCar V3)
+
+# QC metrics
+nFeature = 500, percent.mt = 5
+
+```{r}
+knitr::opts_chunk$set(
+  echo = FALSE,      # hide code (so md shows only text + plots)
+  message = FALSE,   # suppress messages
+  warning = FALSE    # suppress warnings
+)
+```
+
+```{r}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+library(tidyr)
+```
+
+
+# read in integrated object and number of cells
+```{r}
+obj <- readRDS("/project2/aealmada_561/judyz/20260621_scRNA_lizard/rds/integrated_obj_nfeat500_mt5_anocarV3.rds")
+obj
+```
+
+# check RNA QC metrics
+
+```{r fig.width=6, fig.height=3}
+VlnPlot(obj, features = "nFeature_RNA", group.by = "orig.ident", pt.size = 0) + NoLegend()
+VlnPlot(obj, features = "nCount_RNA", group.by = "orig.ident", pt.size = 0) + NoLegend()
+VlnPlot(obj, features = "percent.mt", group.by = "orig.ident", pt.size = 0) + NoLegend()
+```
+
+
+by seurat clusters
+
+```{r fig.width=10, fig.height=3}
+VlnPlot(obj, features = "nFeature_RNA", group.by = "seurat_clusters", pt.size = 0) + NoLegend()
+VlnPlot(obj, features = "nCount_RNA", group.by = "seurat_clusters", pt.size = 0) + NoLegend()
+VlnPlot(obj, features = "percent.mt", group.by = "seurat_clusters", pt.size = 0) + NoLegend()
+```
+
+cluster 15 is a low-qual cluster? if lack of a clear marker genes we can just drop
+
+```{r fig.width=15, fig.height=6}
+FeaturePlot(obj, features=c("percent.mt", "nFeature_RNA", "nCount_RNA"), ncol=3, reduction="tsne", order=TRUE, raster=F)
+```
+
+
+# Check integration and potential batch effect
+```{r fig.width=15, fig.height=6}
+p1 <- DimPlot(obj, reduction="tsne", group.by = "orig.ident", raster=F) + NoLegend()
+p2 <- DimPlot(obj, reduction="tsne", group.by = "seurat_clusters", label=T, raster=F) + NoLegend()
+p1 + p2
+```
+
+
+## cells per library passed initial qc
+```{r fig.width=3, fig.height=4}
+cell_counts <- as.data.frame(table(obj$orig.ident))
+colnames(cell_counts) <- c("orig.ident", "count")
+# bar plot
+ggplot(cell_counts, aes(x = orig.ident, y = count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_text(aes(label=count), vjust = -0.5, size = 3) +
+  theme_classic() +
+  labs(
+    title = "Number of Cells per Library",
+    x = "Library",
+    y = "Cell Count"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Library composition per seurat clusters (barplots)
+no batch effect, every seurat cluster is well represented by both samples
+
+```{r}
+cell_counts <- obj@meta.data %>% 
+  group_by(seurat_clusters, orig.ident) %>% 
+  summarise(cell_n = n(), .groups = "drop")
+
+cell_props <- cell_counts %>%
+  group_by(seurat_clusters) %>% 
+  mutate(prop = cell_n / sum(cell_n))
+
+ggplot(cell_props, aes(x = as.factor(seurat_clusters), y = prop, fill = orig.ident)) +
+  geom_bar(stat = "identity", position = "stack") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  labs(x = "Seurat Cluster", y = "Proportion of Cells", fill = "Sample") +
+  ggtitle("Proportion of each sample within each seurat cluster")
+```
+
+# Visualize cell type specific marker genes
+## FAP 1 and FAP 2
+
+```{r fig.width=12, fig.height=8}
+genes <- c("pdgfra", "mfap5", "pcolce2", "postn", "pdgfrb")
+
+FeaturePlot(obj, features=genes, reduction="tsne", ncol = 3, order=TRUE)
+```
+
+```{r fig.width=10, fig.height=4}
+for (gene in genes) {
+  print(VlnPlot(obj, features = gene, group.by = "seurat_clusters", pt.size = 0))
+}
+```
+
+
+
+## FAP 3
+pdgfra-
+
+```{r fig.width=12, fig.height=8}
+genes <- c("pdgfra", "mfap5", "wnt5a", "postn", "lox")
+
+FeaturePlot(obj, features=genes, reduction="tsne", ncol = 3, order=TRUE)
+```
+
+
+```{r fig.width=10, fig.height=4}
+for (gene in genes) {
+  print(VlnPlot(obj, features = gene, group.by = "seurat_clusters", pt.size = 0))
+}
+```
+
+
+## MuSC and Smooth muscle cells
+
+
+```{r fig.width=12, fig.height=8}
+genes <- c("pax7", "myf5", "acta2", "lmod1")
+
+FeaturePlot(obj, features=genes, reduction="tsne", ncol = 3, order=TRUE)
+```
+
+```{r fig.width=10, fig.height=4}
+for (gene in genes) {
+  print(VlnPlot(obj, features = gene, group.by = "seurat_clusters", pt.size = 0))
+}
+```
+
+
+
+## Macrophages, B and T cells
+
+```{r fig.width=12, fig.height=8}
+genes <- c("marco", "csf1r", "batf", "skap1", "pax5", "cd19")
+
+FeaturePlot(obj, features=genes, reduction="tsne", ncol = 3, order=TRUE)
+```
+
+
+```{r fig.width=10, fig.height=4}
+for (gene in genes) {
+  print(VlnPlot(obj, features = gene, group.by = "seurat_clusters", pt.size = 0))
+}
+```
+
+
+
+
+## endothelial cells and NK cells, neural
+
+```{r fig.width=12, fig.height=8}
+genes <- c("pecam1", "flt1", "cd244", "flt3", "prickle1", "ptn")
+
+FeaturePlot(obj, features=genes, reduction="tsne", ncol = 3, order=TRUE)
+```
+
+
+```{r fig.width=10, fig.height=4}
+for (gene in genes) {
+  print(VlnPlot(obj, features = gene, group.by = "seurat_clusters", pt.size = 0))
+}
+```
+
+
+
+## Bone marrow stem cells, oligo
+
+```{r fig.width=12, fig.height=8}
+genes <- c("il2ra", "kit", "plp1", "bcas1")
+
+FeaturePlot(obj, features=genes, reduction="tsne", ncol = 3, order=TRUE)
+```
+
+
+```{r fig.width=10, fig.height=4}
+for (gene in genes) {
+  print(VlnPlot(obj, features = gene, group.by = "seurat_clusters", pt.size = 0))
+}
+```
+
+
+
+
+## LECs and megakaryocytes
+
+```{r fig.width=12, fig.height=8}
+genes <- c("mmrn1", "prox1", "tbxas1", "itga2b")
+
+FeaturePlot(obj, features=genes, reduction="tsne", ncol = 3, order=TRUE)
+```
+
+
+
+```{r fig.width=10, fig.height=4}
+for (gene in genes) {
+  print(VlnPlot(obj, features = gene, group.by = "seurat_clusters", pt.size = 0))
+}
+```
