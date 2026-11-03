@@ -1,4 +1,4 @@
-# **Singe-Cell RNA Sequencing of Muscle-Associated Cells in the tail and quadriceps of the Super-Regenerating Green Anole Lizard** 
+# Singe-Cell RNA Sequencing of Muscle-Associated Cells in the Tail and Quadriceps in the Highly Regenerative Green Anole Lizard
 
 Difei Zhu, Kartik Soni, Jisun Chin, Thomas P. Lozito, Albert E. Almada
 
@@ -6,65 +6,54 @@ Difei Zhu, Kartik Soni, Jisun Chin, Thomas P. Lozito, Albert E. Almada
 
 ## Overview
 
-This repository contains the code for processing and analyzing single-cell RNA sequencing (scRNA-seq) data from the tail and quadriceps muscles of the green anole lizard (*Anolis carolinensis*). Analyses include data preprocessing and quality check, integration, clustering, differential expression, functional annotation, cell-cell communication, and dataset comparison between tail and quadriceps.
+This folder contains the R scripts used to characterize muscle-associated cells in green anole (*Anolis carolinensis*) tail and quadriceps. Start with [](analysis_codes/) to process the datasets. Use [](plotting_codes/) to find the script for a specific manuscript figure.
 
 
 
 
 
-## Repository Content
+## Analysis codes
 
-### cellchat/
+### Analysis workflow
 
-Code for analyzing and visualizing cell-cell communication networks in the combined scRNA-seq dataset.
-
-- Related to Figure 5
-
-### cellranger_processing/
-
-Code for processing raw sequencing data using AnoCar 2.0 and rAnoCar3.1.pri reference genomes. Also includes comparison of the number of annonated genes between the two reference genome versions.
-
-- Related to Table 1, 2, and Figure 2a
-
-### comparison/
-
-Code for comparing tail and quadriceps datasets, including cell type proportions, bulk-level gene expression, and myogenic gene expression.
-
-- Related to Figure 6
-
-### general_downstream/
-
-Code for downstream analyses such as functional annotation, extraction of cell surface markers, and gene ontology enrichment.
-
-- Related to Figures 3, 4, and Supplementary Figure 3
-- `cell_surface_genes.r`: Extracts surface-expressed genes for each cluster using a publicly available database
-
-### integration/
-
-Code for data integration (tail and quadriceps), clustering, and differential gene expression analysis across clusters
-
-- Related to Supplementary Figure 1
-
-### seurat_preprocessing/
-
-Code for preprocessing scRNA-seq matrices using AnoCar 2.0 and rAnoCar3.1.pri genomes.
-
-- AnoCar2.0: used for Figure 2b and Supplementary Figure 2 (mitochondrial gene percentages)
-- rAnoCar3.2: used for figures 2c-e
+These R scripts analyze single-cell RNA sequencing data from green anole (*Anolis carolinensis*) tail and quadriceps skeletal muscle. The workflow integrates the two tissues, assigns cell type labels, and identifies markers for each annotated population. Two downstream analyses use human orthologs to interpret biological functions and infer cell–cell signaling.
 
 
 
-## Software and Package Versions
+| Script                                                       | Summary                                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [calculate_percent.mt.R](analysis_codes/calculate_percent.mt.R) | Calculate mitochondrial RNA percentages from tail and quadriceps matrices aligned to AnoCar 2.0. |
+| [integration_and_QC.R](analysis_codes/integration_and_QC.R)  | Transfer mitochondrial percentages to matching rAnoCar3.1.pri barcodes. Retain cells with more than 500 detected genes and less than 5% mitochondrial RNA, integrate tissues with Harmony, run clustering analysis, annotate cell types with marker genes. |
+| [DEG_wilcox_findallmarkers.R](analysis_codes/DEG_wilcox_findallmarkers.R) | Identify markers for each annotated cell type using a Wilcoxon rank-sum test. |
+| [cell_surface_markers.R](analysis_codes/cell_surface_markers.R) | Filter the cell type marker table to anole orthologs of human surface proteins from the Human Protein Atlas and Cell Surface Protein Atlas. |
+| [ortholog_conversion.R](analysis_codes/ortholog_conversion.R) | Use a reciprocal best hit table to express anole counts and normalized expression in human gene symbols for the two analyses below. |
+| [GO_enrichr.R](analysis_codes/GO_enrichr.R)                  | Identify markers in human orthologs and test each cell type’s marker set for enrichment of Gene Ontology biological processes. |
+| [cellchat.R](analysis_codes/cellchat.R)                      | Infer ligand–receptor interactions and signaling pathways between cell types using the human CellChat database. |
 
-**R**: 4.4.2
 
-**CellRanger**: 8.0.1
 
-**Seurat**: 5.2.1
+### Manuscript figures
 
-**Harmony**: 1.2.3
+| Figure        | Script                                                    | Panels covered                                               |
+| ------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
+| 2             | [plot_figure2.R](plotting_codes/plot_figure2.R)           | Mitochondrial RNA distribution, per-sample QC metrics, and t-SNE comparison before and after Harmony integration. |
+| 3             | [plot_figure3.R](plotting_codes/plot_figure3.R)           | Annotated cell type t-SNE, literature-supported marker dot plot, and top marker heatmap. |
+| 4             | [plot_figure4.R](plotting_codes/plot_figure4.R)           | Heatmap of candidate cell-surface markers and t-SNE expression plots for selected markers. |
+| 5             | [plot_figure5.R](plotting_codes/plot_figure5.R)           | Inferred cell–cell signaling, including ligand–receptor contributions and CALCR and NOTCH pathway networks. |
+| 6             | [plot_figure6.R](plotting_codes/plot_figure6.R)           | Tail–quadriceps correlations in average gene expression and comparisons of muscle stem cell (MuSC) marker expression. |
+| Supplementary | [plot_supp_figures.R](plotting_codes/plot_supp_figures.R) | Reference genome annotation overlap, QC by cell type, outgoing CellChat networks, and cell type proportions by tissue. |
 
-**enrichR**: 3.4
 
-**CellChat**: 2.1.2
 
+
+
+## Software Version
+
+| Software    | Version |
+| ----------- | ------- |
+| R           | 4.4.2   |
+| Cell Ranger | 8.0.1   |
+| Seurat      | 5.2.1   |
+| Harmony     | 1.2.3   |
+| enrichR     | 3.4     |
+| CellChat    | 2.1.2   |
